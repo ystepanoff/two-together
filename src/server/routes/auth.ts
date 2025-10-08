@@ -6,7 +6,6 @@ import { authenticateToken, AuthRequest } from '../middleware/auth';
 
 const router = express.Router();
 
-// Register
 router.post('/register', async (req: Request, res: Response) => {
   const { username, password } = req.body;
 
@@ -43,7 +42,6 @@ router.post('/register', async (req: Request, res: Response) => {
   }
 });
 
-// Login
 router.post('/login', async (req: Request, res: Response) => {
   const { username, password } = req.body;
 
@@ -79,7 +77,6 @@ router.post('/login', async (req: Request, res: Response) => {
   }
 });
 
-// Pair with partner
 router.post('/pair', authenticateToken, async (req: AuthRequest, res: Response) => {
   const { partnerUsername } = req.body;
 
@@ -88,7 +85,6 @@ router.post('/pair', authenticateToken, async (req: AuthRequest, res: Response) 
   }
 
   try {
-    // Find partner by username
     const partnerResult = await pool.query('SELECT * FROM users WHERE username = $1', [partnerUsername]);
 
     if (partnerResult.rows.length === 0) {
@@ -101,7 +97,6 @@ router.post('/pair', authenticateToken, async (req: AuthRequest, res: Response) 
       return res.status(400).json({ error: 'Cannot pair with yourself' });
     }
 
-    // Check if user is already in a couple
     const existingCoupleResult = await pool.query(
       'SELECT * FROM couples WHERE user1_id = $1 OR user2_id = $1',
       [req.userId]
@@ -111,7 +106,6 @@ router.post('/pair', authenticateToken, async (req: AuthRequest, res: Response) 
       return res.status(400).json({ error: 'User is already paired' });
     }
 
-    // Check if partner is already in a couple
     const partnerCoupleResult = await pool.query(
       'SELECT * FROM couples WHERE user1_id = $1 OR user2_id = $1',
       [partnerId]
@@ -121,13 +115,11 @@ router.post('/pair', authenticateToken, async (req: AuthRequest, res: Response) 
       return res.status(400).json({ error: 'Partner is already paired with someone else' });
     }
 
-    // Create couple
     const coupleResult = await pool.query(
       'INSERT INTO couples (user1_id, user2_id) VALUES ($1, $2) RETURNING *',
       [req.userId, partnerId]
     );
 
-    // Update users with partner_id
     await pool.query('UPDATE users SET partner_id = $1 WHERE id = $2', [partnerId, req.userId]);
     await pool.query('UPDATE users SET partner_id = $1 WHERE id = $2', [req.userId, partnerId]);
 
@@ -138,7 +130,6 @@ router.post('/pair', authenticateToken, async (req: AuthRequest, res: Response) 
   }
 });
 
-// Get partner status
 router.get('/partner', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const userResult = await pool.query('SELECT partner_id FROM users WHERE id = $1', [req.userId]);
@@ -162,7 +153,6 @@ router.get('/partner', authenticateToken, async (req: AuthRequest, res: Response
   }
 });
 
-// Change password
 router.post('/change-password', authenticateToken, async (req: AuthRequest, res: Response) => {
   const { currentPassword, newPassword } = req.body;
 
@@ -175,7 +165,6 @@ router.post('/change-password', authenticateToken, async (req: AuthRequest, res:
   }
 
   try {
-    // Get current user
     const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [req.userId]);
 
     if (userResult.rows.length === 0) {
@@ -184,18 +173,15 @@ router.post('/change-password', authenticateToken, async (req: AuthRequest, res:
 
     const user = userResult.rows[0];
 
-    // Verify current password
     const isValidPassword = await bcrypt.compare(currentPassword, user.password_hash);
 
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Current password is incorrect' });
     }
 
-    // Hash new password
     const saltRounds = 10;
     const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
 
-    // Update password
     await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [newPasswordHash, req.userId]);
 
     res.json({ message: 'Password changed successfully' });

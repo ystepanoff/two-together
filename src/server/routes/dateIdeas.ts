@@ -4,7 +4,6 @@ import { authenticateToken, AuthRequest } from '../middleware/auth';
 
 const router = express.Router();
 
-// Helper function to get couple_id for a user
 async function getCoupleId(userId: number): Promise<number | null> {
   const result = await pool.query(
     'SELECT id FROM couples WHERE user1_id = $1 OR user2_id = $1',
@@ -13,7 +12,6 @@ async function getCoupleId(userId: number): Promise<number | null> {
   return result.rows.length > 0 ? result.rows[0].id : null;
 }
 
-// Get all date ideas for the couple
 router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const coupleId = await getCoupleId(req.userId!);
@@ -38,7 +36,6 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   }
 });
 
-// Create a new date idea
 router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   const { title, description } = req.body;
 
@@ -64,7 +61,6 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   }
 });
 
-// Update a date idea
 router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const { title, description, is_completed, is_favorite } = req.body;
@@ -99,7 +95,6 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
   }
 });
 
-// Vote for a completed date idea to add to "should do again"
 router.post('/:id/vote', authenticateToken, async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 
@@ -110,7 +105,6 @@ router.post('/:id/vote', authenticateToken, async (req: AuthRequest, res: Respon
       return res.status(400).json({ error: 'User must be part of a couple' });
     }
 
-    // Check if date idea exists and is completed
     const dateIdeaResult = await pool.query(
       'SELECT * FROM date_ideas WHERE id = $1 AND couple_id = $2 AND is_completed = true',
       [id, coupleId]
@@ -122,13 +116,11 @@ router.post('/:id/vote', authenticateToken, async (req: AuthRequest, res: Respon
 
     const dateIdea = dateIdeaResult.rows[0];
 
-    // Add or update vote
     await pool.query(
       'INSERT INTO date_idea_votes (date_idea_id, user_id) VALUES ($1, $2) ON CONFLICT (date_idea_id, user_id) DO NOTHING',
       [id, req.userId]
     );
 
-    // Check if both partners have voted
     const voteCountResult = await pool.query(
       'SELECT COUNT(*) as count FROM date_idea_votes WHERE date_idea_id = $1',
       [id]
@@ -136,14 +128,12 @@ router.post('/:id/vote', authenticateToken, async (req: AuthRequest, res: Respon
 
     const voteCount = parseInt(voteCountResult.rows[0].count);
 
-    // If both partners voted, move to "should do again"
     if (voteCount >= 2) {
       await pool.query(
         'INSERT INTO should_do_again (couple_id, title, description, original_date_idea_id) VALUES ($1, $2, $3, $4)',
         [coupleId, dateIdea.title, dateIdea.description, id]
       );
 
-      // Clear votes
       await pool.query('DELETE FROM date_idea_votes WHERE date_idea_id = $1', [id]);
 
       return res.json({ message: 'Added to "Should Do This Again" list!', moved: true });
@@ -156,7 +146,6 @@ router.post('/:id/vote', authenticateToken, async (req: AuthRequest, res: Respon
   }
 });
 
-// Remove vote
 router.delete('/:id/vote', authenticateToken, async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 
@@ -177,7 +166,6 @@ router.delete('/:id/vote', authenticateToken, async (req: AuthRequest, res: Resp
   }
 });
 
-// Delete a date idea
 router.delete('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 

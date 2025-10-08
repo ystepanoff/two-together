@@ -27,7 +27,6 @@ const ShouldDoAgainList: React.FC = () => {
 
     try {
       await shouldDoAgainApi.delete(id);
-      // If we're on a page that would be empty after deletion, go to previous page
       if (items.length === 1 && page > 1) {
         setPage(page - 1);
       } else {

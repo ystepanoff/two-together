@@ -4,7 +4,6 @@ import { authenticateToken, AuthRequest } from '../middleware/auth';
 
 const router = express.Router();
 
-// Helper function to get couple_id for a user
 async function getCoupleId(userId: number): Promise<number | null> {
   const result = await pool.query(
     'SELECT id FROM couples WHERE user1_id = $1 OR user2_id = $1',
@@ -13,7 +12,6 @@ async function getCoupleId(userId: number): Promise<number | null> {
   return result.rows.length > 0 ? result.rows[0].id : null;
 }
 
-// Get all "should do again" items for the couple
 router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const coupleId = await getCoupleId(req.userId!);
@@ -22,19 +20,16 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       return res.json({ items: [], total: 0, page: 1, pageSize: 10 });
     }
 
-    // Parse pagination parameters
     const page = parseInt(req.query.page as string) || 1;
     const pageSize = parseInt(req.query.pageSize as string) || 10;
     const offset = (page - 1) * pageSize;
 
-    // Get total count
     const countResult = await pool.query(
       'SELECT COUNT(*) FROM should_do_again WHERE couple_id = $1',
       [coupleId]
     );
     const total = parseInt(countResult.rows[0].count);
 
-    // Get paginated items
     const result = await pool.query(
       'SELECT * FROM should_do_again WHERE couple_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
       [coupleId, pageSize, offset]
@@ -52,7 +47,6 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   }
 });
 
-// Delete from "should do again" list
 router.delete('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 

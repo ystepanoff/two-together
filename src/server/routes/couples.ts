@@ -4,10 +4,8 @@ import { authenticateToken, AuthRequest } from '../middleware/auth';
 
 const router = express.Router();
 
-// Get couple's background image
 router.get('/background', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
-    // Get user's couple_id
     const coupleResult = await pool.query(
       'SELECT id, background_image FROM couples WHERE user1_id = $1 OR user2_id = $1',
       [req.userId]
@@ -24,7 +22,6 @@ router.get('/background', authenticateToken, async (req: AuthRequest, res: Respo
   }
 });
 
-// Update couple's background image
 router.post('/background', authenticateToken, async (req: AuthRequest, res: Response) => {
   const { backgroundImage } = req.body;
 
@@ -33,7 +30,6 @@ router.post('/background', authenticateToken, async (req: AuthRequest, res: Resp
   }
 
   try {
-    // Get user's couple_id
     const coupleResult = await pool.query(
       'SELECT id FROM couples WHERE user1_id = $1 OR user2_id = $1',
       [req.userId]
@@ -45,7 +41,6 @@ router.post('/background', authenticateToken, async (req: AuthRequest, res: Resp
 
     const coupleId = coupleResult.rows[0].id;
 
-    // Update background image
     await pool.query(
       'UPDATE couples SET background_image = $1 WHERE id = $2',
       [backgroundImage, coupleId]

@@ -10,7 +10,6 @@ const getAuthHeaders = () => {
   };
 };
 
-// Auth API
 export const authApi = {
   register: async (username: string, password: string): Promise<AuthResponse> => {
     const response = await fetch(`${API_BASE}/auth/register`, {
@@ -60,7 +59,6 @@ export const authApi = {
   },
 };
 
-// Date Ideas API
 export const dateIdeasApi = {
   getAll: async (): Promise<DateIdea[]> => {
     const response = await fetch(`${API_BASE}/date-ideas`, {
@@ -119,7 +117,6 @@ export const dateIdeasApi = {
   },
 };
 
-// Should Do Again API
 export const shouldDoAgainApi = {
   getAll: async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<ShouldDoAgain>> => {
     const response = await fetch(`${API_BASE}/should-do-again?page=${page}&pageSize=${pageSize}`, {
