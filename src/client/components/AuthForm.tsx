@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { authApi } from '../api';
 import { User } from '../types';
 
@@ -12,6 +12,20 @@ const AuthForm: React.FC<AuthFormProps> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [allowRegistration, setAllowRegistration] = useState(true);
+
+  useEffect(() => {
+    const checkRegistrationAllowed = async () => {
+      try {
+        const response = await fetch('/api/admin/settings/public');
+        const data = await response.json();
+        setAllowRegistration(data.allow_registration);
+      } catch (error) {
+        console.error('Failed to check registration settings:', error);
+      }
+    };
+    checkRegistrationAllowed();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,19 +80,21 @@ const AuthForm: React.FC<AuthFormProps> = ({ onLogin }) => {
           {loading ? 'Loading...' : isLogin ? 'Login' : 'Register'}
         </button>
 
-        <div className="auth-switch">
-          {isLogin ? "Don't have an account? " : 'Already have an account? '}
-          <button
-            type="button"
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setError('');
-            }}
-            disabled={loading}
-          >
-            {isLogin ? 'Register' : 'Login'}
-          </button>
-        </div>
+        {(allowRegistration || !isLogin) && (
+          <div className="auth-switch">
+            {isLogin ? "Don't have an account? " : 'Already have an account? '}
+            <button
+              type="button"
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError('');
+              }}
+              disabled={loading}
+            >
+              {isLogin ? 'Register' : 'Login'}
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );

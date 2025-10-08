@@ -14,6 +14,16 @@ router.post('/register', async (req: Request, res: Response) => {
   }
 
   try {
+    const settingsResult = await pool.query(
+      "SELECT setting_value FROM app_settings WHERE setting_key = 'allow_registration'"
+    );
+
+    const allowRegistration = settingsResult.rows[0]?.setting_value === 'true';
+
+    if (!allowRegistration) {
+      return res.status(403).json({ error: 'Registration is currently disabled' });
+    }
+
     const userExists = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
 
     if (userExists.rows.length > 0) {

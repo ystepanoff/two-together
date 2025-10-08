@@ -4,6 +4,9 @@ import { DateIdea } from '../types';
 
 const DateIdeasList: React.FC = () => {
   const [ideas, setIdeas] = useState<DateIdea[]>([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [pageSize] = useState(5);
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -12,12 +15,13 @@ const DateIdeasList: React.FC = () => {
 
   useEffect(() => {
     loadIdeas();
-  }, []);
+  }, [page]);
 
   const loadIdeas = async () => {
     try {
-      const data = await dateIdeasApi.getAll();
-      setIdeas(data);
+      const data = await dateIdeasApi.getAll(page, pageSize);
+      setIdeas(data.items);
+      setTotal(data.total);
     } catch (error) {
       console.error('Failed to load date ideas:', error);
     }
@@ -31,6 +35,7 @@ const DateIdeasList: React.FC = () => {
       await dateIdeasApi.create(newTitle, newDescription);
       setNewTitle('');
       setNewDescription('');
+      setPage(1);
       loadIdeas();
     } catch (error) {
       console.error('Failed to add date idea:', error);
@@ -110,11 +115,19 @@ const DateIdeasList: React.FC = () => {
 
     try {
       await dateIdeasApi.delete(id);
-      loadIdeas();
+      if (ideas.length === 1 && page > 1) {
+        setPage(page - 1);
+      } else {
+        loadIdeas();
+      }
     } catch (error) {
       console.error('Failed to delete date idea:', error);
     }
   };
+
+  const totalPages = Math.ceil(total / pageSize);
+  const hasNextPage = page < totalPages;
+  const hasPrevPage = page > 1;
 
   return (
     <div className="section">
@@ -238,6 +251,28 @@ const DateIdeasList: React.FC = () => {
           ))
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div className="pagination">
+          <button
+            className="btn-small"
+            onClick={() => setPage(page - 1)}
+            disabled={!hasPrevPage}
+          >
+            Previous
+          </button>
+          <span className="pagination-info">
+            Page {page} of {totalPages} ({total} total)
+          </span>
+          <button
+            className="btn-small"
+            onClick={() => setPage(page + 1)}
+            disabled={!hasNextPage}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 };

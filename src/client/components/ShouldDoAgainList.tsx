@@ -6,7 +6,7 @@ const ShouldDoAgainList: React.FC = () => {
   const [items, setItems] = useState<ShouldDoAgain[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [pageSize] = useState(10);
+  const [pageSize] = useState(5);
 
   useEffect(() => {
     loadItems();

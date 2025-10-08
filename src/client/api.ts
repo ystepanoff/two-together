@@ -60,8 +60,8 @@ export const authApi = {
 };
 
 export const dateIdeasApi = {
-  getAll: async (): Promise<DateIdea[]> => {
-    const response = await fetch(`${API_BASE}/date-ideas`, {
+  getAll: async (page: number = 1, pageSize: number = 5): Promise<PaginatedResponse<DateIdea>> => {
+    const response = await fetch(`${API_BASE}/date-ideas?page=${page}&pageSize=${pageSize}`, {
       headers: getAuthHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch date ideas');

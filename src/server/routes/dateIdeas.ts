@@ -17,8 +17,18 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     const coupleId = await getCoupleId(req.userId!);
 
     if (!coupleId) {
-      return res.json([]);
+      return res.json({ items: [], total: 0, page: 1, pageSize: 5 });
     }
+
+    const page = parseInt(req.query.page as string) || 1;
+    const pageSize = parseInt(req.query.pageSize as string) || 5;
+    const offset = (page - 1) * pageSize;
+
+    const countResult = await pool.query(
+      'SELECT COUNT(*) FROM date_ideas WHERE couple_id = $1',
+      [coupleId]
+    );
+    const total = parseInt(countResult.rows[0].count);
 
     const result = await pool.query(
       `SELECT di.*,
@@ -26,10 +36,17 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
               (SELECT COUNT(*) > 0 FROM date_idea_votes WHERE date_idea_id = di.id AND user_id = $2) as current_user_voted
        FROM date_ideas di
        WHERE di.couple_id = $1
-       ORDER BY di.created_at DESC`,
-      [coupleId, req.userId]
+       ORDER BY di.created_at DESC
+       LIMIT $3 OFFSET $4`,
+      [coupleId, req.userId, pageSize, offset]
     );
-    res.json(result.rows);
+
+    res.json({
+      items: result.rows,
+      total,
+      page,
+      pageSize
+    });
   } catch (error) {
     console.error('Get date ideas error:', error);
     res.status(500).json({ error: 'Internal server error' });

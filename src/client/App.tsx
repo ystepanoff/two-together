@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from
 import AuthForm from './components/AuthForm';
 import MainContent from './components/MainContent';
 import Settings from './components/Settings';
+import Admin from './components/Admin';
 import { User, PartnerStatus } from './types';
 import { authApi } from './api';
 import './App.css';
@@ -15,6 +16,7 @@ const AppContent: React.FC = () => {
   const [backgroundImage, setBackgroundImage] = useState<string>('');
   const [partnerStatus, setPartnerStatus] = useState<PartnerStatus | null>(null);
   const [partnerUsername, setPartnerUsername] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const savedToken = localStorage.getItem('token');
@@ -22,6 +24,7 @@ const AppContent: React.FC = () => {
       setToken(savedToken);
       loadPartnerStatus();
       loadBackgroundImage();
+      checkAdmin();
     }
   }, []);
 
@@ -51,11 +54,27 @@ const AppContent: React.FC = () => {
     }
   };
 
+  const checkAdmin = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/admin/check', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      setIsAdmin(data.is_admin || false);
+    } catch (error) {
+      console.error('Failed to check admin status:', error);
+    }
+  };
+
   const handleLogin = (newToken: string, newUser: User) => {
     setToken(newToken);
     setUser(newUser);
     loadPartnerStatus();
     loadBackgroundImage();
+    checkAdmin();
   };
 
   const handleLogout = () => {
@@ -138,13 +157,21 @@ const AppContent: React.FC = () => {
             {partnerStatus?.partner && (
               <span className="partner-info">💑 Paired with {partnerStatus.partner.username}</span>
             )}
-            {location.pathname === '/settings' ? (
+            {location.pathname === '/' && (
+              <>
+                {isAdmin && (
+                  <button onClick={() => navigate('/admin')} className="btn-secondary">
+                    Admin
+                  </button>
+                )}
+                <button onClick={() => navigate('/settings')} className="btn-secondary">
+                  Settings
+                </button>
+              </>
+            )}
+            {(location.pathname === '/settings' || location.pathname === '/admin') && (
               <button onClick={() => navigate('/')} className="btn-secondary">
                 Home
-              </button>
-            ) : (
-              <button onClick={() => navigate('/settings')} className="btn-secondary">
-                Settings
               </button>
             )}
             <button onClick={handleLogout} className="btn-secondary">
@@ -164,6 +191,7 @@ const AppContent: React.FC = () => {
               />
             }
           />
+          {isAdmin && <Route path="/admin" element={<Admin />} />}
         </Routes>
       </div>
     </div>
