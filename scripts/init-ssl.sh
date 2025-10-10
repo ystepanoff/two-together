@@ -56,6 +56,8 @@ docker run --rm \
     --email $EMAIL \
     --agree-tos \
     --no-eff-email \
+    --non-interactive \
+    --force-renewal \
     -d $DOMAIN
 
 echo "Cleaning up temporary nginx..."
