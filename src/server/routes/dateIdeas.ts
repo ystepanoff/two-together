@@ -36,7 +36,7 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
               (SELECT COUNT(*) > 0 FROM date_idea_votes WHERE date_idea_id = di.id AND user_id = $2) as current_user_voted
        FROM date_ideas di
        WHERE di.couple_id = $1
-       ORDER BY di.created_at DESC
+       ORDER BY di.is_completed ASC, di.created_at DESC
        LIMIT $3 OFFSET $4`,
       [coupleId, req.userId, pageSize, offset]
     );
