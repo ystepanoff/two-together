@@ -45,4 +45,5 @@ jobs:
         key: ${{ secrets.VPS_SSH_KEY }}
         script: |
           cd /opt/twotogether
+          git pull
           bash scripts/deploy.sh
