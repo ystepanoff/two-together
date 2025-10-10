@@ -1,6 +1,6 @@
 services:
   app:
-    image: ${DOCKER_IMAGE:-ghcr.io/ystepanoff/twotogether:latest}
+    image: ${DOCKER_IMAGE:-ghcr.io/ystepanoff/two-together:latest}
     container_name: twotogether-app
     restart: unless-stopped
     environment:
