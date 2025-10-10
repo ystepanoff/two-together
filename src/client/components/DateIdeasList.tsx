@@ -12,6 +12,7 @@ const DateIdeasList: React.FC = () => {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     loadIdeas();
@@ -129,9 +130,27 @@ const DateIdeasList: React.FC = () => {
   const hasNextPage = page < totalPages;
   const hasPrevPage = page > 1;
 
+  const filteredIdeas = ideas.filter((idea) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      idea.title.toLowerCase().includes(query) ||
+      idea.description.toLowerCase().includes(query)
+    );
+  });
+
   return (
     <div className="section">
       <h2>Date Ideas</h2>
+
+      <div className="search-box">
+        <input
+          type="text"
+          placeholder="Search date ideas..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="search-input"
+        />
+      </div>
 
       <form className="add-form" onSubmit={handleAdd}>
         <input
@@ -150,12 +169,12 @@ const DateIdeasList: React.FC = () => {
       </form>
 
       <div className="ideas-list">
-        {ideas.length === 0 ? (
+        {filteredIdeas.length === 0 ? (
           <div className="empty-state">
-            <p>No date ideas yet. Add your first one above!</p>
+            <p>{ideas.length === 0 ? 'No date ideas yet. Add your first one above!' : 'No matching date ideas found.'}</p>
           </div>
         ) : (
-          ideas.map((idea) => (
+          filteredIdeas.map((idea) => (
             <div
               key={idea.id}
               className={`idea-item ${idea.is_completed ? 'completed' : ''}`}

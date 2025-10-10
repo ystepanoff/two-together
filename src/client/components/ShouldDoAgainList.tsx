@@ -7,6 +7,7 @@ const ShouldDoAgainList: React.FC = () => {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [pageSize] = useState(5);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     loadItems();
@@ -41,18 +42,36 @@ const ShouldDoAgainList: React.FC = () => {
   const hasNextPage = page < totalPages;
   const hasPrevPage = page > 1;
 
+  const filteredItems = items.filter((item) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      item.title.toLowerCase().includes(query) ||
+      item.description.toLowerCase().includes(query)
+    );
+  });
+
   return (
     <div className="section">
       <h2>Should Do This Again ❤️</h2>
 
+      <div className="search-box">
+        <input
+          type="text"
+          placeholder="Search dates to repeat..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="search-input"
+        />
+      </div>
+
       <div className="again-list">
-        {items.length === 0 ? (
+        {filteredItems.length === 0 ? (
           <div className="empty-state">
-            <p>No dates to repeat yet. Complete and mark your favorite dates!</p>
+            <p>{items.length === 0 ? 'No dates to repeat yet. Complete and mark your favorite dates!' : 'No matching dates found.'}</p>
           </div>
         ) : (
           <>
-            {items.map((item) => (
+            {filteredItems.map((item) => (
               <div key={item.id} className="again-item">
                 <div className="again-title">{item.title}</div>
                 {item.description && (
