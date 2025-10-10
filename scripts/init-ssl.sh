@@ -12,8 +12,6 @@ EMAIL=$2
 echo "Initializing SSL certificates for $DOMAIN..."
 
 mkdir -p nginx/ssl
-mkdir -p certbot-data
-mkdir -p letsencrypt
 
 cat > nginx/nginx-temp.conf << EOF
 events {
@@ -41,15 +39,15 @@ echo "Starting temporary nginx for ACME challenge..."
 docker run -d --name nginx-temp \
     -p 80:80 \
     -v "$(pwd)/nginx/nginx-temp.conf:/etc/nginx/nginx.conf:ro" \
-    -v "$(pwd)/certbot-data:/var/www/certbot" \
+    -v twotogether_certbot-data:/var/www/certbot \
     nginx:alpine
 
 sleep 5
 
 echo "Obtaining SSL certificate from Let's Encrypt..."
 docker run --rm \
-    -v "$(pwd)/certbot-data:/var/www/certbot" \
-    -v "$(pwd)/letsencrypt:/etc/letsencrypt" \
+    -v twotogether_certbot-data:/var/www/certbot \
+    -v twotogether_letsencrypt:/etc/letsencrypt \
     certbot/certbot certonly \
     --webroot \
     --webroot-path=/var/www/certbot \
