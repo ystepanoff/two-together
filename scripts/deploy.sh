@@ -9,6 +9,9 @@ if [ -f .env ]; then
     export $(cat .env | grep -v '^#' | xargs)
 fi
 
+echo "Logging into GitHub Container Registry..."
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USERNAME" --password-stdin
+
 echo "Pulling latest Docker image..."
 docker-compose pull
 
