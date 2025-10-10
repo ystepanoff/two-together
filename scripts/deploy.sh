@@ -19,6 +19,9 @@ echo "Restarting services..."
 docker-compose down
 docker-compose up -d
 
+echo "Waiting for postgres to be ready..."
+sleep 5
+
 echo "Running database migrations..."
 for migration in database/migration-*.sql; do
     if [ -f "$migration" ]; then
