@@ -12,6 +12,9 @@ EMAIL=$2
 echo "Initializing SSL certificates for $DOMAIN..."
 
 mkdir -p nginx/ssl
+mkdir -p certbot-data
+mkdir -p letsencrypt
+
 cat > nginx/nginx-temp.conf << EOF
 events {
     worker_connections 1024;
@@ -34,11 +37,20 @@ http {
 }
 EOF
 
-docker-compose up -d nginx
+echo "Starting temporary nginx for ACME challenge..."
+docker run -d --name nginx-temp \
+    -p 80:80 \
+    -v "$(pwd)/nginx/nginx-temp.conf:/etc/nginx/nginx.conf:ro" \
+    -v "$(pwd)/certbot-data:/var/www/certbot" \
+    nginx:alpine
 
 sleep 5
 
-docker-compose run --rm certbot certonly \
+echo "Obtaining SSL certificate from Let's Encrypt..."
+docker run --rm \
+    -v "$(pwd)/certbot-data:/var/www/certbot" \
+    -v "$(pwd)/letsencrypt:/etc/letsencrypt" \
+    certbot/certbot certonly \
     --webroot \
     --webroot-path=/var/www/certbot \
     --email $EMAIL \
@@ -46,10 +58,15 @@ docker-compose run --rm certbot certonly \
     --no-eff-email \
     -d $DOMAIN
 
+echo "Cleaning up temporary nginx..."
+docker stop nginx-temp
+docker rm nginx-temp
+
+echo "Updating nginx configuration..."
 sed -i.bak "s/YOUR_DOMAIN/$DOMAIN/g" nginx/nginx.conf
 rm nginx/nginx.conf.bak
 
-docker-compose down
+echo "Starting full application stack..."
 docker-compose up -d
 
 echo "SSL certificate obtained successfully!"

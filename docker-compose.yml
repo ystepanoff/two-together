@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   app:
-    build: .
+    image: ${DOCKER_IMAGE:-ghcr.io/ystepanoff/twotogether:latest}
     container_name: twotogether-app
     restart: unless-stopped
     environment:

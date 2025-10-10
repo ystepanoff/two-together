@@ -9,8 +9,11 @@ if [ -f .env ]; then
     export $(cat .env | grep -v '^#' | xargs)
 fi
 
+echo "Pulling latest Docker image..."
+docker-compose pull
+
+echo "Restarting services..."
 docker-compose down
-docker-compose build --no-cache
 docker-compose up -d
 
 echo "Running database migrations..."
