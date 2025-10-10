@@ -130,13 +130,18 @@ const DateIdeasList: React.FC = () => {
   const hasNextPage = page < totalPages;
   const hasPrevPage = page > 1;
 
-  const filteredIdeas = ideas.filter((idea) => {
-    const query = searchQuery.toLowerCase();
-    return (
-      idea.title.toLowerCase().includes(query) ||
-      idea.description.toLowerCase().includes(query)
-    );
-  });
+  const filteredIdeas = ideas
+    .filter((idea) => {
+      const query = searchQuery.toLowerCase();
+      return (
+        idea.title.toLowerCase().includes(query) ||
+        idea.description.toLowerCase().includes(query)
+      );
+    })
+    .sort((a, b) => {
+      if (a.is_completed === b.is_completed) return 0;
+      return a.is_completed ? 1 : -1;
+    });
 
   return (
     <div className="section">
