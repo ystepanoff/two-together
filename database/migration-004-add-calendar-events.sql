@@ -1,5 +1,3 @@
--- Migration 004: Add calendar events table
-
 CREATE TABLE calendar_events (
   id SERIAL PRIMARY KEY,
   couple_id INTEGER REFERENCES couples(id) ON DELETE CASCADE NOT NULL,
@@ -14,12 +12,10 @@ CREATE TABLE calendar_events (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create indexes for better performance
 CREATE INDEX idx_calendar_events_couple_id ON calendar_events(couple_id);
 CREATE INDEX idx_calendar_events_date_range ON calendar_events(start_datetime, end_datetime);
 CREATE INDEX idx_calendar_events_date_idea_id ON calendar_events(date_idea_id);
 
--- Add trigger to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN

@@ -96,7 +96,6 @@ const Calendar: React.FC = () => {
 
     const days = [];
 
-    // Previous month days
     for (let i = firstDay - 1; i >= 0; i--) {
       days.push({
         date: new Date(year, month - 1, daysInPrevMonth - i),
@@ -104,7 +103,6 @@ const Calendar: React.FC = () => {
       });
     }
 
-    // Current month days
     for (let i = 1; i <= daysInMonth; i++) {
       days.push({
         date: new Date(year, month, i),
@@ -112,7 +110,6 @@ const Calendar: React.FC = () => {
       });
     }
 
-    // Next month days to fill the grid
     const remainingDays = 42 - days.length;
     for (let i = 1; i <= remainingDays; i++) {
       days.push({

@@ -46,7 +46,6 @@ const EventDialog: React.FC<EventDialogProps> = ({ event, dateIdeas, initialDate
     }
   }, [event, initialDate]);
 
-  // Pre-populate with initial date idea if provided
   useEffect(() => {
     if (!event && initialDateIdea) {
       setTitle(initialDateIdea.title);
@@ -67,6 +66,14 @@ const EventDialog: React.FC<EventDialogProps> = ({ event, dateIdeas, initialDate
     } else {
       start_datetime = `${startDate}T${startTime}:00`;
       end_datetime = `${endDate}T${endTime}:00`;
+    }
+
+    const startDateTime = new Date(start_datetime);
+    const endDateTime = new Date(end_datetime);
+
+    if (endDateTime < startDateTime) {
+      alert('End date/time cannot be before start date/time');
+      return;
     }
 
     onSave({

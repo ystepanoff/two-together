@@ -61,6 +61,10 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Title, start_datetime, and end_datetime are required' });
     }
 
+    if (new Date(end_datetime) < new Date(start_datetime)) {
+      return res.status(400).json({ error: 'End date/time cannot be before start date/time' });
+    }
+
     const result = await pool.query(
       `INSERT INTO calendar_events
        (couple_id, title, description, start_datetime, end_datetime, is_all_day, date_idea_id, created_by_user_id)
@@ -105,6 +109,18 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
 
     if (checkResult.rows.length === 0) {
       return res.status(404).json({ error: 'Calendar event not found' });
+    }
+
+    const existingEvent = await pool.query(
+      'SELECT start_datetime, end_datetime FROM calendar_events WHERE id = $1',
+      [id]
+    );
+
+    const finalStartDatetime = start_datetime || existingEvent.rows[0].start_datetime;
+    const finalEndDatetime = end_datetime || existingEvent.rows[0].end_datetime;
+
+    if (new Date(finalEndDatetime) < new Date(finalStartDatetime)) {
+      return res.status(400).json({ error: 'End date/time cannot be before start date/time' });
     }
 
     const result = await pool.query(
