@@ -4,6 +4,7 @@ import AuthForm from './components/AuthForm';
 import MainContent from './components/MainContent';
 import Settings from './components/Settings';
 import Admin from './components/Admin';
+import Calendar from './components/Calendar';
 import { User, PartnerStatus } from './types';
 import { authApi } from './api';
 import './App.css';
@@ -164,12 +165,15 @@ const AppContent: React.FC = () => {
                     Admin
                   </button>
                 )}
+                <button onClick={() => navigate('/calendar')} className="btn-secondary">
+                  Calendar
+                </button>
                 <button onClick={() => navigate('/settings')} className="btn-secondary">
                   Settings
                 </button>
               </>
             )}
-            {(location.pathname === '/settings' || location.pathname === '/admin') && (
+            {(location.pathname === '/settings' || location.pathname === '/admin' || location.pathname === '/calendar') && (
               <button onClick={() => navigate('/')} className="btn-secondary">
                 Home
               </button>
@@ -182,6 +186,7 @@ const AppContent: React.FC = () => {
 
         <Routes>
           <Route path="/" element={<MainContent />} />
+          <Route path="/calendar" element={<Calendar />} />
           <Route
             path="/settings"
             element={

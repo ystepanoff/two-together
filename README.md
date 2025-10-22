@@ -98,6 +98,3 @@ twotogether/
 - JWT tokens are used for authentication
 - All API routes (except auth) are protected with authentication middleware
 
-## License
-
-ISC

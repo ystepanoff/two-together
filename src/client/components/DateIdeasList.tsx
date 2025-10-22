@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { dateIdeasApi, shouldDoAgainApi } from '../api';
+import { dateIdeasApi, shouldDoAgainApi, calendarEventsApi } from '../api';
 import { DateIdea } from '../types';
+import EventDialog from './EventDialog';
 
 const DateIdeasList: React.FC = () => {
   const [ideas, setIdeas] = useState<DateIdea[]>([]);
@@ -13,6 +14,8 @@ const DateIdeasList: React.FC = () => {
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
+  const [selectedDateIdea, setSelectedDateIdea] = useState<DateIdea | null>(null);
 
   useEffect(() => {
     loadIdeas();
@@ -126,6 +129,26 @@ const DateIdeasList: React.FC = () => {
     }
   };
 
+  const handleAddToCalendar = (idea: DateIdea) => {
+    setSelectedDateIdea(idea);
+    setIsCalendarDialogOpen(true);
+  };
+
+  const handleSaveCalendarEvent = async (eventData: any) => {
+    try {
+      await calendarEventsApi.create({
+        ...eventData,
+        date_idea_id: selectedDateIdea?.id,
+      });
+      setIsCalendarDialogOpen(false);
+      setSelectedDateIdea(null);
+      alert('Event added to calendar!');
+    } catch (error) {
+      console.error('Failed to add event to calendar:', error);
+      alert('Failed to add event to calendar');
+    }
+  };
+
   const totalPages = Math.ceil(total / pageSize);
   const hasNextPage = page < totalPages;
   const hasPrevPage = page > 1;
@@ -232,6 +255,14 @@ const DateIdeasList: React.FC = () => {
                     >
                       {idea.is_favorite ? 'Unfavorite' : 'Favorite'}
                     </button>
+                    {!idea.is_completed && (
+                      <button
+                        className="btn-small btn-calendar"
+                        onClick={() => handleAddToCalendar(idea)}
+                      >
+                        📅 Add to Calendar
+                      </button>
+                    )}
                     {idea.is_completed && (
                       <>
                         {idea.current_user_voted ? (
@@ -291,6 +322,20 @@ const DateIdeasList: React.FC = () => {
             Next
           </button>
         </div>
+      )}
+
+      {isCalendarDialogOpen && selectedDateIdea && (
+        <EventDialog
+          event={null}
+          dateIdeas={ideas}
+          initialDate={new Date()}
+          initialDateIdea={selectedDateIdea}
+          onSave={handleSaveCalendarEvent}
+          onClose={() => {
+            setIsCalendarDialogOpen(false);
+            setSelectedDateIdea(null);
+          }}
+        />
       )}
     </div>
   );

@@ -7,6 +7,7 @@ import dateIdeasRoutes from './routes/dateIdeas';
 import shouldDoAgainRoutes from './routes/shouldDoAgain';
 import couplesRoutes from './routes/couples';
 import adminRoutes from './routes/admin';
+import calendarEventsRoutes from './routes/calendarEvents';
 
 dotenv.config();
 
@@ -29,6 +30,7 @@ app.use('/api/date-ideas', dateIdeasRoutes);
 app.use('/api/should-do-again', shouldDoAgainRoutes);
 app.use('/api/couples', couplesRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/calendar-events', calendarEventsRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });

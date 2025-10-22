@@ -47,3 +47,17 @@ export interface AuthResponse {
   token: string;
   user: User;
 }
+
+export interface CalendarEvent {
+  id: number;
+  couple_id: number;
+  date_idea_id?: number;
+  title: string;
+  description?: string;
+  start_datetime: string;
+  end_datetime: string;
+  is_all_day: boolean;
+  created_by_user_id: number;
+  created_at: string;
+  updated_at: string;
+}
