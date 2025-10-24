@@ -158,24 +158,34 @@ const AppContent: React.FC = () => {
             {partnerStatus?.partner && (
               <span className="partner-info">💑 Paired with {partnerStatus.partner.username}</span>
             )}
-            {location.pathname === '/' && (
-              <>
-                {isAdmin && (
-                  <button onClick={() => navigate('/admin')} className="btn-secondary">
-                    Admin
-                  </button>
-                )}
-                <button onClick={() => navigate('/calendar')} className="btn-secondary">
-                  Calendar
-                </button>
-                <button onClick={() => navigate('/settings')} className="btn-secondary">
-                  Settings
-                </button>
-              </>
-            )}
-            {(location.pathname === '/settings' || location.pathname === '/admin' || location.pathname === '/calendar') && (
-              <button onClick={() => navigate('/')} className="btn-secondary">
-                Home
+            <button
+              onClick={() => navigate('/')}
+              className="btn-secondary"
+              disabled={location.pathname === '/'}
+            >
+              Home
+            </button>
+            <button
+              onClick={() => navigate('/calendar')}
+              className="btn-secondary"
+              disabled={location.pathname === '/calendar'}
+            >
+              Calendar
+            </button>
+            <button
+              onClick={() => navigate('/settings')}
+              className="btn-secondary"
+              disabled={location.pathname === '/settings'}
+            >
+              Settings
+            </button>
+            {isAdmin && (
+              <button
+                onClick={() => navigate('/admin')}
+                className="btn-secondary"
+                disabled={location.pathname === '/admin'}
+              >
+                Admin
               </button>
             )}
             <button onClick={handleLogout} className="btn-secondary">
