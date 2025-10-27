@@ -1,6 +1,8 @@
 import express, { Response } from 'express';
 import pool from '../db';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
+import ical, { ICalCalendar } from 'ical-generator';
+import { syncEventToGoogle, deleteEventFromGoogle } from '../services/googleCalendarSync';
 
 const router = express.Router();
 
@@ -12,7 +14,35 @@ async function getCoupleId(userId: number): Promise<number | null> {
   return result.rows.length > 0 ? result.rows[0].id : null;
 }
 
-// Get calendar events for a date range
+router.get('/subscription-url', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const coupleId = await getCoupleId(req.userId!);
+
+    if (!coupleId) {
+      return res.status(404).json({ error: 'Couple not found' });
+    }
+
+    const result = await pool.query(
+      'SELECT calendar_token FROM couples WHERE id = $1',
+      [coupleId]
+    );
+
+    if (result.rows.length === 0 || !result.rows[0].calendar_token) {
+      return res.status(404).json({ error: 'Calendar token not found' });
+    }
+
+    const token = result.rows[0].calendar_token;
+    const protocol = req.protocol;
+    const host = req.get('host');
+    const subscriptionUrl = `${protocol}://${host}/api/calendar-events/ical/${coupleId}/${token}`;
+
+    res.json({ subscriptionUrl });
+  } catch (error) {
+    console.error('Error getting subscription URL:', error);
+    res.status(500).json({ error: 'Failed to get subscription URL' });
+  }
+});
+
 router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const coupleId = await getCoupleId(req.userId!);
@@ -46,7 +76,6 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   }
 });
 
-// Create a new calendar event
 router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const coupleId = await getCoupleId(req.userId!);
@@ -82,14 +111,19 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       ]
     );
 
-    res.status(201).json(result.rows[0]);
+    const createdEvent = result.rows[0];
+
+    syncEventToGoogle(createdEvent, coupleId).catch(err =>
+      console.error('Failed to sync event to Google Calendar:', err)
+    );
+
+    res.status(201).json(createdEvent);
   } catch (error) {
     console.error('Error creating calendar event:', error);
     res.status(500).json({ error: 'Failed to create calendar event' });
   }
 });
 
-// Update a calendar event
 router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const coupleId = await getCoupleId(req.userId!);
@@ -101,7 +135,6 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
     const { id } = req.params;
     const { title, description, start_datetime, end_datetime, is_all_day } = req.body;
 
-    // Verify the event belongs to the couple
     const checkResult = await pool.query(
       'SELECT id FROM calendar_events WHERE id = $1 AND couple_id = $2',
       [id, coupleId]
@@ -136,14 +169,19 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
       [title, description, start_datetime, end_datetime, is_all_day, id, coupleId]
     );
 
-    res.json(result.rows[0]);
+    const updatedEvent = result.rows[0];
+
+    syncEventToGoogle(updatedEvent, coupleId).catch(err =>
+      console.error('Failed to sync updated event to Google Calendar:', err)
+    );
+
+    res.json(updatedEvent);
   } catch (error) {
     console.error('Error updating calendar event:', error);
     res.status(500).json({ error: 'Failed to update calendar event' });
   }
 });
 
-// Delete a calendar event
 router.delete('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const coupleId = await getCoupleId(req.userId!);
@@ -154,19 +192,84 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res: Response)
 
     const { id } = req.params;
 
+    const eventResult = await pool.query(
+      'SELECT google_event_id FROM calendar_events WHERE id = $1 AND couple_id = $2',
+      [id, coupleId]
+    );
+
+    if (eventResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Calendar event not found' });
+    }
+
+    const googleEventId = eventResult.rows[0].google_event_id;
+
     const result = await pool.query(
       'DELETE FROM calendar_events WHERE id = $1 AND couple_id = $2 RETURNING id',
       [id, coupleId]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Calendar event not found' });
+    if (googleEventId) {
+      deleteEventFromGoogle(googleEventId, coupleId).catch(err =>
+        console.error('Failed to delete event from Google Calendar:', err)
+      );
     }
 
     res.json({ message: 'Calendar event deleted successfully' });
   } catch (error) {
     console.error('Error deleting calendar event:', error);
     res.status(500).json({ error: 'Failed to delete calendar event' });
+  }
+});
+
+router.get('/ical/:coupleId/:token', async (req, res: Response) => {
+  try {
+    const { coupleId, token } = req.params;
+
+    const coupleResult = await pool.query(
+      'SELECT id FROM couples WHERE id = $1 AND calendar_token = $2',
+      [coupleId, token]
+    );
+
+    if (coupleResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Calendar not found or invalid token' });
+    }
+
+    const eventsResult = await pool.query(
+      `SELECT * FROM calendar_events
+       WHERE couple_id = $1
+       ORDER BY start_datetime ASC`,
+      [coupleId]
+    );
+
+    const calendar = ical({
+      name: 'TwoTogether Calendar',
+      description: 'Shared calendar for couples',
+      timezone: 'UTC',
+      ttl: 3600,
+    });
+
+    eventsResult.rows.forEach((event: any) => {
+      const startDate = new Date(event.start_datetime);
+      const endDate = new Date(event.end_datetime);
+
+      calendar.createEvent({
+        id: `${event.id}@twotogether`,
+        start: startDate,
+        end: endDate,
+        summary: event.title,
+        description: event.description || '',
+        allDay: event.is_all_day,
+        created: new Date(event.created_at),
+        lastModified: new Date(event.updated_at),
+      });
+    });
+
+    res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="calendar.ics"');
+    res.send(calendar.toString());
+  } catch (error) {
+    console.error('Error generating iCal feed:', error);
+    res.status(500).json({ error: 'Failed to generate calendar feed' });
   }
 });
 

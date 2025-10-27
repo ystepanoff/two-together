@@ -111,7 +111,6 @@ const AppContent: React.FC = () => {
     );
   }
 
-  // Show partner pairing screen if not paired yet
   if (token && partnerStatus && !partnerStatus.hasPair) {
     return (
       <div className="app" style={{ '--background-image': `url(${backgroundImage})` } as React.CSSProperties}>

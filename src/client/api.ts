@@ -171,4 +171,39 @@ export const calendarEventsApi = {
     });
     if (!response.ok) throw new Error('Failed to delete calendar event');
   },
+
+  getSubscriptionUrl: async (): Promise<{ subscriptionUrl: string }> => {
+    const response = await fetch(`${API_BASE}/calendar-events/subscription-url`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to get subscription URL');
+    return response.json();
+  },
+};
+
+export const googleCalendarApi = {
+  getConnectUrl: async (): Promise<{ authUrl: string }> => {
+    const response = await fetch(`${API_BASE}/google-calendar/connect`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to get Google Calendar connect URL');
+    return response.json();
+  },
+
+  getStatus: async (): Promise<{ isConnected: boolean }> => {
+    const response = await fetch(`${API_BASE}/google-calendar/status`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to get Google Calendar status');
+    return response.json();
+  },
+
+  disconnect: async (): Promise<{ message: string }> => {
+    const response = await fetch(`${API_BASE}/google-calendar/disconnect`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to disconnect Google Calendar');
+    return response.json();
+  },
 };

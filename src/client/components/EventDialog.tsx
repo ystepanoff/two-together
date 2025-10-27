@@ -30,15 +30,28 @@ const EventDialog: React.FC<EventDialogProps> = ({ event, dateIdeas, initialDate
       const start = new Date(event.start_datetime);
       const end = new Date(event.end_datetime);
 
-      setStartDate(start.toISOString().split('T')[0]);
-      setEndDate(end.toISOString().split('T')[0]);
+      const formatDateForInput = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
 
-      if (!event.is_all_day) {
-        setStartTime(start.toTimeString().slice(0, 5));
-        setEndTime(end.toTimeString().slice(0, 5));
-      }
+      const formatTimeForInput = (date: Date) => {
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
+      };
+
+      setStartDate(formatDateForInput(start));
+      setEndDate(formatDateForInput(end));
+      setStartTime(formatTimeForInput(start));
+      setEndTime(formatTimeForInput(end));
     } else if (initialDate) {
-      const dateStr = initialDate.toISOString().split('T')[0];
+      const year = initialDate.getFullYear();
+      const month = String(initialDate.getMonth() + 1).padStart(2, '0');
+      const day = String(initialDate.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
       setStartDate(dateStr);
       setEndDate(dateStr);
       setStartTime('12:00');
@@ -64,8 +77,10 @@ const EventDialog: React.FC<EventDialogProps> = ({ event, dateIdeas, initialDate
       start_datetime = `${startDate}T00:00:00`;
       end_datetime = `${endDate}T23:59:59`;
     } else {
-      start_datetime = `${startDate}T${startTime}:00`;
-      end_datetime = `${endDate}T${endTime}:00`;
+      const validStartTime = startTime || '00:00';
+      const validEndTime = endTime || '00:00';
+      start_datetime = `${startDate}T${validStartTime}:00`;
+      end_datetime = `${endDate}T${validEndTime}:00`;
     }
 
     const startDateTime = new Date(start_datetime);
