@@ -197,6 +197,19 @@ body {
   transform: translateY(-1px);
 }
 
+.btn-secondary:disabled {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+  cursor: default;
+  transform: none;
+  opacity: 1;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+.btn-secondary:disabled:hover {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+  transform: none;
+}
+
 .content {
   display: grid;
   grid-template-columns: 1fr 1fr;

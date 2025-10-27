@@ -5,7 +5,6 @@ import { requireAdmin } from '../middleware/adminAuth';
 
 const router = express.Router();
 
-// Public endpoint for checking registration settings
 router.get('/settings/public', async (req, res: Response) => {
   try {
     const result = await pool.query(

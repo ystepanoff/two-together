@@ -4,6 +4,7 @@ import AuthForm from './components/AuthForm';
 import MainContent from './components/MainContent';
 import Settings from './components/Settings';
 import Admin from './components/Admin';
+import Calendar from './components/Calendar';
 import { User, PartnerStatus } from './types';
 import { authApi } from './api';
 import './App.css';
@@ -110,7 +111,6 @@ const AppContent: React.FC = () => {
     );
   }
 
-  // Show partner pairing screen if not paired yet
   if (token && partnerStatus && !partnerStatus.hasPair) {
     return (
       <div className="app" style={{ '--background-image': `url(${backgroundImage})` } as React.CSSProperties}>
@@ -157,21 +157,34 @@ const AppContent: React.FC = () => {
             {partnerStatus?.partner && (
               <span className="partner-info">💑 Paired with {partnerStatus.partner.username}</span>
             )}
-            {location.pathname === '/' && (
-              <>
-                {isAdmin && (
-                  <button onClick={() => navigate('/admin')} className="btn-secondary">
-                    Admin
-                  </button>
-                )}
-                <button onClick={() => navigate('/settings')} className="btn-secondary">
-                  Settings
-                </button>
-              </>
-            )}
-            {(location.pathname === '/settings' || location.pathname === '/admin') && (
-              <button onClick={() => navigate('/')} className="btn-secondary">
-                Home
+            <button
+              onClick={() => navigate('/')}
+              className="btn-secondary"
+              disabled={location.pathname === '/'}
+            >
+              Home
+            </button>
+            <button
+              onClick={() => navigate('/calendar')}
+              className="btn-secondary"
+              disabled={location.pathname === '/calendar'}
+            >
+              Calendar
+            </button>
+            <button
+              onClick={() => navigate('/settings')}
+              className="btn-secondary"
+              disabled={location.pathname === '/settings'}
+            >
+              Settings
+            </button>
+            {isAdmin && (
+              <button
+                onClick={() => navigate('/admin')}
+                className="btn-secondary"
+                disabled={location.pathname === '/admin'}
+              >
+                Admin
               </button>
             )}
             <button onClick={handleLogout} className="btn-secondary">
@@ -182,6 +195,7 @@ const AppContent: React.FC = () => {
 
         <Routes>
           <Route path="/" element={<MainContent />} />
+          <Route path="/calendar" element={<Calendar />} />
           <Route
             path="/settings"
             element={
