@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { setAuthErrorHandler } from '../api';
 
 interface SettingsProps {
   backgroundImage: string;
@@ -60,13 +61,17 @@ const Settings: React.FC<SettingsProps> = ({ backgroundImage, onBackgroundImageC
           body: JSON.stringify({ backgroundImage: imageUrl }),
         });
 
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem('token');
+          window.location.href = '/';
+          return;
+        }
+
         const data = await response.json();
 
         if (!response.ok) {
           if (response.status === 404) {
             throw new Error('You need to be paired with your partner before setting a background image');
-          } else if (response.status === 401) {
-            throw new Error('Your session has expired. Please log in again.');
           } else {
             throw new Error(data.error || `Failed to update background image (Status: ${response.status})`);
           }
@@ -115,6 +120,12 @@ const Settings: React.FC<SettingsProps> = ({ backgroundImage, onBackgroundImageC
           newPassword,
         }),
       });
+
+      if (response.status === 401 || response.status === 403) {
+        localStorage.removeItem('token');
+        window.location.href = '/';
+        return;
+      }
 
       const data = await response.json();
 

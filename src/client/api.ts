@@ -2,12 +2,35 @@ import { AuthResponse, DateIdea, ShouldDoAgain, PartnerStatus, PaginatedResponse
 
 const API_BASE = '/api';
 
+let onAuthError: (() => void) | null = null;
+
+export const setAuthErrorHandler = (handler: () => void) => {
+  onAuthError = handler;
+};
+
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
   return {
     'Content-Type': 'application/json',
     ...(token && { Authorization: `Bearer ${token}` }),
   };
+};
+
+const handleResponse = async <T>(response: Response): Promise<T> => {
+  if (response.status === 401 || response.status === 403) {
+    localStorage.removeItem('token');
+    if (onAuthError) {
+      onAuthError();
+    }
+    throw new Error('Session expired. Please log in again.');
+  }
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Request failed' }));
+    throw new Error(error.error || 'Request failed');
+  }
+
+  return response.json();
 };
 
 export const authApi = {
@@ -54,8 +77,7 @@ export const authApi = {
     const response = await fetch(`${API_BASE}/auth/partner`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch partner status');
-    return response.json();
+    return handleResponse<PartnerStatus>(response);
   },
 };
 
@@ -64,8 +86,7 @@ export const dateIdeasApi = {
     const response = await fetch(`${API_BASE}/date-ideas?page=${page}&pageSize=${pageSize}`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch date ideas');
-    return response.json();
+    return handleResponse<PaginatedResponse<DateIdea>>(response);
   },
 
   create: async (title: string, description: string): Promise<DateIdea> => {
@@ -74,8 +95,7 @@ export const dateIdeasApi = {
       headers: getAuthHeaders(),
       body: JSON.stringify({ title, description }),
     });
-    if (!response.ok) throw new Error('Failed to create date idea');
-    return response.json();
+    return handleResponse<DateIdea>(response);
   },
 
   update: async (
@@ -87,8 +107,7 @@ export const dateIdeasApi = {
       headers: getAuthHeaders(),
       body: JSON.stringify(updates),
     });
-    if (!response.ok) throw new Error('Failed to update date idea');
-    return response.json();
+    return handleResponse<DateIdea>(response);
   },
 
   delete: async (id: number): Promise<void> => {
@@ -96,7 +115,7 @@ export const dateIdeasApi = {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to delete date idea');
+    await handleResponse<void>(response);
   },
 
   vote: async (id: number): Promise<{ message: string; moved: boolean; vote_count?: number }> => {
@@ -104,8 +123,7 @@ export const dateIdeasApi = {
       method: 'POST',
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to vote');
-    return response.json();
+    return handleResponse<{ message: string; moved: boolean; vote_count?: number }>(response);
   },
 
   removeVote: async (id: number): Promise<void> => {
@@ -113,7 +131,7 @@ export const dateIdeasApi = {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to remove vote');
+    await handleResponse<void>(response);
   },
 };
 
@@ -122,8 +140,7 @@ export const shouldDoAgainApi = {
     const response = await fetch(`${API_BASE}/should-do-again?page=${page}&pageSize=${pageSize}`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch should do again list');
-    return response.json();
+    return handleResponse<PaginatedResponse<ShouldDoAgain>>(response);
   },
 
   delete: async (id: number): Promise<void> => {
@@ -131,7 +148,7 @@ export const shouldDoAgainApi = {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to delete from should do again list');
+    await handleResponse<void>(response);
   },
 };
 
@@ -140,8 +157,7 @@ export const calendarEventsApi = {
     const response = await fetch(`${API_BASE}/calendar-events?start=${start}&end=${end}`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch calendar events');
-    return response.json();
+    return handleResponse<CalendarEvent[]>(response);
   },
 
   create: async (event: Omit<CalendarEvent, 'id' | 'couple_id' | 'created_by_user_id' | 'created_at' | 'updated_at'>): Promise<CalendarEvent> => {
@@ -150,8 +166,7 @@ export const calendarEventsApi = {
       headers: getAuthHeaders(),
       body: JSON.stringify(event),
     });
-    if (!response.ok) throw new Error('Failed to create calendar event');
-    return response.json();
+    return handleResponse<CalendarEvent>(response);
   },
 
   update: async (id: number, updates: Partial<Omit<CalendarEvent, 'id' | 'couple_id' | 'created_by_user_id' | 'created_at' | 'updated_at'>>): Promise<CalendarEvent> => {
@@ -160,8 +175,7 @@ export const calendarEventsApi = {
       headers: getAuthHeaders(),
       body: JSON.stringify(updates),
     });
-    if (!response.ok) throw new Error('Failed to update calendar event');
-    return response.json();
+    return handleResponse<CalendarEvent>(response);
   },
 
   delete: async (id: number): Promise<void> => {
@@ -169,15 +183,14 @@ export const calendarEventsApi = {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to delete calendar event');
+    await handleResponse<void>(response);
   },
 
   getSubscriptionUrl: async (): Promise<{ subscriptionUrl: string }> => {
     const response = await fetch(`${API_BASE}/calendar-events/subscription-url`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to get subscription URL');
-    return response.json();
+    return handleResponse<{ subscriptionUrl: string }>(response);
   },
 };
 
@@ -186,16 +199,14 @@ export const googleCalendarApi = {
     const response = await fetch(`${API_BASE}/google-calendar/connect`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to get Google Calendar connect URL');
-    return response.json();
+    return handleResponse<{ authUrl: string }>(response);
   },
 
   getStatus: async (): Promise<{ isConnected: boolean }> => {
     const response = await fetch(`${API_BASE}/google-calendar/status`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to get Google Calendar status');
-    return response.json();
+    return handleResponse<{ isConnected: boolean }>(response);
   },
 
   disconnect: async (): Promise<{ message: string }> => {
@@ -203,7 +214,6 @@ export const googleCalendarApi = {
       method: 'POST',
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to disconnect Google Calendar');
-    return response.json();
+    return handleResponse<{ message: string }>(response);
   },
 };
