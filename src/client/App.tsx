@@ -6,7 +6,7 @@ import Settings from './components/Settings';
 import Admin from './components/Admin';
 import Calendar from './components/Calendar';
 import { User, PartnerStatus } from './types';
-import { authApi } from './api';
+import { authApi, setAuthErrorHandler } from './api';
 import './App.css';
 
 const AppContent: React.FC = () => {
@@ -20,6 +20,10 @@ const AppContent: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    setAuthErrorHandler(() => {
+      handleLogout();
+    });
+
     const savedToken = localStorage.getItem('token');
     if (savedToken) {
       setToken(savedToken);
@@ -46,9 +50,17 @@ const AppContent: React.FC = () => {
           'Authorization': `Bearer ${token}`,
         },
       });
-      const data = await response.json();
-      if (data.backgroundImage) {
-        setBackgroundImage(data.backgroundImage);
+
+      if (response.status === 401 || response.status === 403) {
+        handleLogout();
+        return;
+      }
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.backgroundImage) {
+          setBackgroundImage(data.backgroundImage);
+        }
       }
     } catch (error) {
       console.error('Failed to load background image:', error);
@@ -63,8 +75,16 @@ const AppContent: React.FC = () => {
           'Authorization': `Bearer ${token}`,
         },
       });
-      const data = await response.json();
-      setIsAdmin(data.is_admin || false);
+
+      if (response.status === 401 || response.status === 403) {
+        handleLogout();
+        return;
+      }
+
+      if (response.ok) {
+        const data = await response.json();
+        setIsAdmin(data.is_admin || false);
+      }
     } catch (error) {
       console.error('Failed to check admin status:', error);
     }

@@ -19,6 +19,12 @@ const Admin: React.FC = () => {
         },
       });
 
+      if (response.status === 401 || response.status === 403) {
+        localStorage.removeItem('token');
+        window.location.href = '/';
+        return;
+      }
+
       if (!response.ok) {
         throw new Error('Failed to load settings');
       }
@@ -48,6 +54,12 @@ const Admin: React.FC = () => {
         },
         body: JSON.stringify({ value: newValue }),
       });
+
+      if (response.status === 401 || response.status === 403) {
+        localStorage.removeItem('token');
+        window.location.href = '/';
+        return;
+      }
 
       if (!response.ok) {
         throw new Error('Failed to update setting');
