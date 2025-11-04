@@ -144,6 +144,14 @@ export const calendarEventsApi = {
     return response.json();
   },
 
+  getEventsByDateIdea: async (dateIdeaId: number): Promise<CalendarEvent[]> => {
+    const response = await fetch(`${API_BASE}/calendar-events/by-date-idea/${dateIdeaId}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch calendar events by date idea');
+    return response.json();
+  },
+
   create: async (event: Omit<CalendarEvent, 'id' | 'couple_id' | 'created_by_user_id' | 'created_at' | 'updated_at'>): Promise<CalendarEvent> => {
     const response = await fetch(`${API_BASE}/calendar-events`, {
       method: 'POST',

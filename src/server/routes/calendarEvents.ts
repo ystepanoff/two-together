@@ -32,14 +32,39 @@ router.get('/subscription-url', authenticateToken, async (req: AuthRequest, res:
     }
 
     const token = result.rows[0].calendar_token;
-    const protocol = req.protocol;
     const host = req.get('host');
-    const subscriptionUrl = `${protocol}://${host}/api/calendar-events/ical/${coupleId}/${token}`;
+    const subscriptionUrl = `https://${host}/api/calendar-events/ical/${coupleId}/${token}`;
 
     res.json({ subscriptionUrl });
   } catch (error) {
     console.error('Error getting subscription URL:', error);
     res.status(500).json({ error: 'Failed to get subscription URL' });
+  }
+});
+
+router.get('/by-date-idea/:dateIdeaId', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const coupleId = await getCoupleId(req.userId!);
+
+    if (!coupleId) {
+      return res.json([]);
+    }
+
+    const { dateIdeaId } = req.params;
+
+    const result = await pool.query(
+      `SELECT * FROM calendar_events
+       WHERE couple_id = $1
+       AND date_idea_id = $2
+       AND end_datetime >= CURRENT_TIMESTAMP
+       ORDER BY start_datetime ASC`,
+      [coupleId, dateIdeaId]
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching calendar events by date idea:', error);
+    res.status(500).json({ error: 'Failed to fetch calendar events' });
   }
 });
 

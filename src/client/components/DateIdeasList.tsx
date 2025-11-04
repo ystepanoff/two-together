@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { dateIdeasApi, shouldDoAgainApi, calendarEventsApi } from '../api';
-import { DateIdea } from '../types';
+import { DateIdea, CalendarEvent } from '../types';
 import EventDialog from './EventDialog';
 
 const DateIdeasList: React.FC = () => {
@@ -16,6 +16,7 @@ const DateIdeasList: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
   const [selectedDateIdea, setSelectedDateIdea] = useState<DateIdea | null>(null);
+  const [dateIdeaEvents, setDateIdeaEvents] = useState<Record<number, CalendarEvent[]>>({});
 
   useEffect(() => {
     loadIdeas();
@@ -129,7 +130,13 @@ const DateIdeasList: React.FC = () => {
     }
   };
 
-  const handleAddToCalendar = (idea: DateIdea) => {
+  const handleAddToCalendar = async (idea: DateIdea) => {
+    try {
+      const events = await calendarEventsApi.getEventsByDateIdea(idea.id);
+      setDateIdeaEvents({ ...dateIdeaEvents, [idea.id]: events });
+    } catch (error) {
+      console.error('Failed to fetch calendar events:', error);
+    }
     setSelectedDateIdea(idea);
     setIsCalendarDialogOpen(true);
   };
@@ -140,8 +147,10 @@ const DateIdeasList: React.FC = () => {
         ...eventData,
         date_idea_id: selectedDateIdea?.id,
       });
-      setIsCalendarDialogOpen(false);
-      setSelectedDateIdea(null);
+      if (selectedDateIdea) {
+        const events = await calendarEventsApi.getEventsByDateIdea(selectedDateIdea.id);
+        setDateIdeaEvents({ ...dateIdeaEvents, [selectedDateIdea.id]: events });
+      }
       alert('Event added to calendar!');
     } catch (error) {
       console.error('Failed to add event to calendar:', error);
@@ -330,10 +339,26 @@ const DateIdeasList: React.FC = () => {
           dateIdeas={ideas}
           initialDate={new Date()}
           initialDateIdea={selectedDateIdea}
+          existingEvents={dateIdeaEvents[selectedDateIdea.id] || []}
           onSave={handleSaveCalendarEvent}
           onClose={() => {
             setIsCalendarDialogOpen(false);
             setSelectedDateIdea(null);
+          }}
+          onDelete={async (eventId: number) => {
+            if (!confirm('Are you sure you want to delete this event?')) return;
+
+            try {
+              await calendarEventsApi.delete(eventId);
+              if (selectedDateIdea) {
+                const events = await calendarEventsApi.getEventsByDateIdea(selectedDateIdea.id);
+                setDateIdeaEvents({ ...dateIdeaEvents, [selectedDateIdea.id]: events });
+              }
+              alert('Event deleted successfully!');
+            } catch (error) {
+              console.error('Failed to delete event:', error);
+              alert('Failed to delete event');
+            }
           }}
         />
       )}
