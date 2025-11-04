@@ -2,6 +2,7 @@ import express, { Response } from 'express';
 import { google } from 'googleapis';
 import pool from '../db';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { syncEventToGoogle } from '../services/googleCalendarSync';
 
 const router = express.Router();
 
@@ -94,6 +95,50 @@ router.post('/disconnect', authenticateToken, async (req: AuthRequest, res: Resp
   } catch (error) {
     console.error('Error disconnecting Google Calendar:', error);
     res.status(500).json({ error: 'Failed to disconnect Google Calendar' });
+  }
+});
+
+router.post('/sync-all', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const coupleResult = await pool.query(
+      'SELECT id FROM couples WHERE user1_id = $1 OR user2_id = $1',
+      [req.userId]
+    );
+
+    if (coupleResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Couple not found' });
+    }
+
+    const coupleId = coupleResult.rows[0].id;
+
+    const eventsResult = await pool.query(
+      'SELECT * FROM calendar_events WHERE couple_id = $1 ORDER BY start_datetime ASC',
+      [coupleId]
+    );
+
+    const events = eventsResult.rows;
+    let syncedCount = 0;
+    let errorCount = 0;
+
+    for (const event of events) {
+      try {
+        await syncEventToGoogle(event, coupleId);
+        syncedCount++;
+      } catch (error) {
+        console.error(`Failed to sync event ${event.id}:`, error);
+        errorCount++;
+      }
+    }
+
+    res.json({
+      message: 'Sync completed',
+      total: events.length,
+      synced: syncedCount,
+      errors: errorCount
+    });
+  } catch (error) {
+    console.error('Error syncing all events:', error);
+    res.status(500).json({ error: 'Failed to sync events' });
   }
 });
 
