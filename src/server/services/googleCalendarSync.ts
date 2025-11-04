@@ -75,15 +75,20 @@ export async function syncEventToGoogle(event: CalendarEvent, coupleId: number) 
 
     const calendar = google.calendar({ version: 'v3', auth });
 
+    const startDate = new Date(event.start_datetime);
+    const endDate = new Date(event.end_datetime);
+    const startDateStr = startDate.toISOString().split('T')[0];
+    const endDateStr = endDate.toISOString().split('T')[0];
+
     const googleEvent = {
       summary: event.title,
       description: event.description || '',
       start: event.is_all_day
-        ? { date: event.start_datetime.split('T')[0] }
-        : { dateTime: event.start_datetime, timeZone: 'UTC' },
+        ? { date: startDateStr }
+        : { dateTime: startDate.toISOString(), timeZone: 'UTC' },
       end: event.is_all_day
-        ? { date: event.end_datetime.split('T')[0] }
-        : { dateTime: event.end_datetime, timeZone: 'UTC' },
+        ? { date: endDateStr }
+        : { dateTime: endDate.toISOString(), timeZone: 'UTC' },
     };
 
     try {
