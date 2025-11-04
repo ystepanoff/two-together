@@ -118,15 +118,20 @@ router.post('/sync-all', authenticateToken, async (req: AuthRequest, res: Respon
 
     const events = eventsResult.rows;
     let syncedCount = 0;
-    let errorCount = 0;
+    const failedEvents: Array<{ id: number; title: string; error: string }> = [];
 
     for (const event of events) {
       try {
         await syncEventToGoogle(event, coupleId);
         syncedCount++;
       } catch (error) {
-        console.error(`Failed to sync event ${event.id}:`, error);
-        errorCount++;
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error(`Failed to sync event ${event.id} ("${event.title}"):`, errorMessage);
+        failedEvents.push({
+          id: event.id,
+          title: event.title,
+          error: errorMessage
+        });
       }
     }
 
@@ -134,7 +139,8 @@ router.post('/sync-all', authenticateToken, async (req: AuthRequest, res: Respon
       message: 'Sync completed',
       total: events.length,
       synced: syncedCount,
-      errors: errorCount
+      errors: failedEvents.length,
+      failedEvents: failedEvents.length > 0 ? failedEvents : undefined
     });
   } catch (error) {
     console.error('Error syncing all events:', error);

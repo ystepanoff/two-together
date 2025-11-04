@@ -66,7 +66,12 @@ const Calendar: React.FC = () => {
   const handleSyncAllEvents = async () => {
     try {
       const result = await googleCalendarApi.syncAll();
-      if (result.errors > 0) {
+      if (result.errors > 0 && result.failedEvents) {
+        const failedDetails = result.failedEvents
+          .map(e => `- "${e.title}" (ID: ${e.id}): ${e.error}`)
+          .join('\n');
+        alert(`Synced ${result.synced} of ${result.total} events.\n\nFailed events:\n${failedDetails}`);
+      } else if (result.errors > 0) {
         alert(`Synced ${result.synced} of ${result.total} events. ${result.errors} failed.`);
       } else {
         alert(`Successfully synced ${result.synced} events to Google Calendar!`);
