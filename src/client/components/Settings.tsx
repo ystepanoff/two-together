@@ -148,7 +148,7 @@ const Settings: React.FC<SettingsProps> = ({ backgroundImage, onBackgroundImageC
         <div className="settings-card">
           <div className="card-header">
             <h3>Background Image</h3>
-            <p className="card-description">Customize your shared background image</p>
+            <p className="card-description">Customise your shared background image</p>
           </div>
           <div className="card-content">
             {bgError && <div className="error-message">{bgError}</div>}
