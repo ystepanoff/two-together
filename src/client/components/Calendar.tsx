@@ -335,18 +335,8 @@ const Calendar: React.FC = () => {
             setIsDialogOpen(false);
             setSelectedEvent(null);
           }}
+          onDelete={handleDeleteEvent}
         />
-      )}
-
-      {selectedEvent && isDialogOpen && (
-        <div className="event-actions">
-          <button
-            onClick={() => handleDeleteEvent(selectedEvent.id)}
-            className="btn-danger"
-          >
-            Delete Event
-          </button>
-        </div>
       )}
     </div>
   );

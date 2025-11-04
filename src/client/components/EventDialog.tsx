@@ -6,11 +6,13 @@ interface EventDialogProps {
   dateIdeas: DateIdea[];
   initialDate?: Date;
   initialDateIdea?: DateIdea;
+  existingEvents?: CalendarEvent[];
   onSave: (event: Omit<CalendarEvent, 'id' | 'couple_id' | 'created_by_user_id' | 'created_at' | 'updated_at'>) => void;
   onClose: () => void;
+  onDelete?: (eventId: number) => void;
 }
 
-const EventDialog: React.FC<EventDialogProps> = ({ event, dateIdeas, initialDate, initialDateIdea, onSave, onClose }) => {
+const EventDialog: React.FC<EventDialogProps> = ({ event, dateIdeas, initialDate, initialDateIdea, existingEvents = [], onSave, onClose, onDelete }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -116,10 +118,63 @@ const EventDialog: React.FC<EventDialogProps> = ({ event, dateIdeas, initialDate
     }
   };
 
+  const formatEventDateTime = (event: CalendarEvent) => {
+    const start = new Date(event.start_datetime);
+    const end = new Date(event.end_datetime);
+
+    const dateOptions: Intl.DateTimeFormatOptions = {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    };
+    const timeOptions: Intl.DateTimeFormatOptions = {
+      hour: '2-digit',
+      minute: '2-digit'
+    };
+
+    if (event.is_all_day) {
+      return start.toLocaleDateString(undefined, dateOptions);
+    } else {
+      const dateStr = start.toLocaleDateString(undefined, dateOptions);
+      const startTimeStr = start.toLocaleTimeString(undefined, timeOptions);
+      const endTimeStr = end.toLocaleTimeString(undefined, timeOptions);
+      return `${dateStr}, ${startTimeStr} - ${endTimeStr}`;
+    }
+  };
+
+  const handleDeleteExistingEvent = async (eventId: number) => {
+    if (onDelete) {
+      onDelete(eventId);
+    }
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <h2>{event ? 'Edit Event' : 'New Event'}</h2>
+
+        {existingEvents.length > 0 && (
+          <div className="existing-events">
+            <h3>Scheduled Future Dates ({initialDateIdea?.title}):</h3>
+            <ul className="event-list">
+              {existingEvents.map((evt) => (
+                <li key={evt.id} className="event-item-container">
+                  <span className="event-item-text">{formatEventDateTime(evt)}</span>
+                  {onDelete && (
+                    <button
+                      type="button"
+                      className="btn-delete-event"
+                      onClick={() => handleDeleteExistingEvent(evt.id)}
+                    >
+                      Delete
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Link to Date Idea *</label>
@@ -169,7 +224,10 @@ const EventDialog: React.FC<EventDialogProps> = ({ event, dateIdeas, initialDate
               <input
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setEndDate(e.target.value);
+                }}
                 required
               />
             </div>
@@ -180,7 +238,10 @@ const EventDialog: React.FC<EventDialogProps> = ({ event, dateIdeas, initialDate
                 <input
                   type="time"
                   value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
+                  onChange={(e) => {
+                    setStartTime(e.target.value);
+                    setEndTime(e.target.value);
+                  }}
                 />
               </div>
             )}
@@ -213,6 +274,15 @@ const EventDialog: React.FC<EventDialogProps> = ({ event, dateIdeas, initialDate
             <button type="button" onClick={onClose} className="btn-secondary">
               Cancel
             </button>
+            {event && onDelete && (
+              <button
+                type="button"
+                onClick={() => handleDeleteExistingEvent(event.id)}
+                className="btn-danger"
+              >
+                Delete
+              </button>
+            )}
             <button type="submit" className="btn-primary">
               {event ? 'Update' : 'Create'}
             </button>
