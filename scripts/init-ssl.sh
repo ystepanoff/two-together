@@ -9,7 +9,7 @@ fi
 DOMAIN=$1
 EMAIL=$2
 
-echo "Initializing SSL certificates for $DOMAIN..."
+echo "Initialising SSL certificates for $DOMAIN..."
 
 mkdir -p nginx/ssl
 

@@ -259,10 +259,10 @@ const DateIdeasList: React.FC = () => {
                   </div>
                   <div className="idea-actions">
                     <button
-                      className="btn-small btn-favorite"
+                      className="btn-small btn-favourite"
                       onClick={() => handleToggleFavorite(idea)}
                     >
-                      {idea.is_favorite ? 'Unfavorite' : 'Favorite'}
+                      {idea.is_favorite ? 'Unfavourite' : 'Favourite'}
                     </button>
                     {!idea.is_completed && (
                       <button

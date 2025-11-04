@@ -23,10 +23,29 @@ echo "Waiting for postgres to be ready..."
 sleep 5
 
 echo "Running database migrations..."
-for migration in database/migration-*.sql; do
+
+echo "Initialising migrations table..."
+docker-compose exec -T postgres psql -U $POSTGRES_USER -d twotogether < "database/migration-000-init-migrations-table.sql" 2>&1 | grep -v "NOTICE" || true
+
+for migration in $(ls database/migration-*.sql | sort -V); do
     if [ -f "$migration" ]; then
-        echo "Running $migration..."
-        docker-compose exec -T postgres psql -U $POSTGRES_USER -d twotogether < "$migration" || true
+        migration_name=$(basename "$migration")
+
+        already_applied=$(docker-compose exec -T postgres psql -U $POSTGRES_USER -d twotogether -tAc \
+            "SELECT COUNT(*) FROM _migrations WHERE migration_name = '$migration_name'" 2>/dev/null || echo "0")
+
+        if [ "$already_applied" = "0" ]; then
+            echo "Running $migration_name..."
+            if docker-compose exec -T postgres psql -U $POSTGRES_USER -d twotogether < "$migration" 2>&1 | grep -v "NOTICE"; then
+                docker-compose exec -T postgres psql -U $POSTGRES_USER -d twotogether -c \
+                    "INSERT INTO _migrations (migration_name) VALUES ('$migration_name') ON CONFLICT (migration_name) DO NOTHING" >/dev/null 2>&1
+                echo "✓ $migration_name applied successfully"
+            else
+                echo "✗ $migration_name failed"
+            fi
+        else
+            echo "⊘ $migration_name already applied, skipping"
+        fi
     fi
 done
 

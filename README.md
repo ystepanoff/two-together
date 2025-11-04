@@ -7,7 +7,7 @@ A React TypeScript application for couples to manage and track date ideas togeth
 - 🔐 User authentication with encrypted passwords
 - 👥 Partner pairing system for couples
 - 📝 Add, edit, delete, and tick off date ideas
-- ⭐ Mark favorite date ideas
+- ⭐ Mark favourite date ideas
 - ✅ Track completed dates
 - 💕 "Should Do This Again" list for memorable dates
 - 📅 Shared calendar for planning dates
@@ -49,7 +49,7 @@ A React TypeScript application for couples to manage and track date ideas togeth
    - Create a new project or select existing
    - Enable the Google Calendar API
    - Create OAuth 2.0 credentials (Web application type)
-   - Add authorized redirect URI: `http://localhost:3000/api/google-calendar/callback`
+   - Add authorised redirect URI: `http://localhost:3000/api/google-calendar/callback`
    - Copy the Client ID and Client Secret
 
 4. **Configure environment variables:**
@@ -90,7 +90,7 @@ A React TypeScript application for couples to manage and track date ideas togeth
 ### Managing Date Ideas
 4. Start adding date ideas!
 5. Check off dates as you complete them
-6. Mark favorites with the star button
+6. Mark favourites with the star button
 7. Add completed dates to "Should Do This Again" list
 
 ### Calendar & Syncing
