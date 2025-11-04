@@ -63,6 +63,20 @@ const Calendar: React.FC = () => {
     }
   };
 
+  const handleSyncAllEvents = async () => {
+    try {
+      const result = await googleCalendarApi.syncAll();
+      if (result.errors > 0) {
+        alert(`Synced ${result.synced} of ${result.total} events. ${result.errors} failed.`);
+      } else {
+        alert(`Successfully synced ${result.synced} events to Google Calendar!`);
+      }
+    } catch (error) {
+      console.error('Failed to sync events:', error);
+      alert('Failed to sync events to Google Calendar');
+    }
+  };
+
   const loadEvents = async () => {
     try {
       const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
@@ -247,9 +261,14 @@ const Calendar: React.FC = () => {
             {isGoogleConnected ? (
               <div className="google-connected">
                 <p>✓ Google Calendar is connected - events sync instantly!</p>
-                <button onClick={handleGoogleDisconnect} className="btn-secondary">
-                  Disconnect Google Calendar
-                </button>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                  <button onClick={handleSyncAllEvents} className="btn-primary">
+                    Sync All Events
+                  </button>
+                  <button onClick={handleGoogleDisconnect} className="btn-secondary">
+                    Disconnect Google Calendar
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="google-disconnected">

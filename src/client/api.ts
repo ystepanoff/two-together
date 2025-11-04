@@ -224,4 +224,12 @@ export const googleCalendarApi = {
     });
     return handleResponse<{ message: string }>(response);
   },
+
+  syncAll: async (): Promise<{ message: string; total: number; synced: number; errors: number }> => {
+    const response = await fetch(`${API_BASE}/google-calendar/sync-all`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    return handleResponse<{ message: string; total: number; synced: number; errors: number }>(response);
+  },
 };
