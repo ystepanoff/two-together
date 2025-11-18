@@ -476,16 +476,6 @@ body {
   transition: all 0.2s;
 }
 
-.btn-favourite {
-  background: #f39c12;
-  color: white;
-}
-
-.btn-favourite:hover {
-  background: #e67e22;
-  transform: translateY(-1px);
-}
-
 .btn-again {
   background: #27ae60;
   color: white;

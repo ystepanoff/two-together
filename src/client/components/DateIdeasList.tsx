@@ -56,14 +56,6 @@ const DateIdeasList: React.FC = () => {
     }
   };
 
-  const handleToggleFavorite = async (idea: DateIdea) => {
-    try {
-      await dateIdeasApi.update(idea.id, { is_favorite: !idea.is_favorite });
-      loadIdeas();
-    } catch (error) {
-      console.error('Failed to update date idea:', error);
-    }
-  };
 
   const handleVote = async (idea: DateIdea) => {
     try {
@@ -249,7 +241,6 @@ const DateIdeasList: React.FC = () => {
                           idea.is_completed ? 'completed' : ''
                         }`}
                       >
-                        {idea.is_favorite && '⭐ '}
                         {idea.title}
                       </div>
                       {idea.description && (
@@ -258,12 +249,6 @@ const DateIdeasList: React.FC = () => {
                     </div>
                   </div>
                   <div className="idea-actions">
-                    <button
-                      className="btn-small btn-favourite"
-                      onClick={() => handleToggleFavorite(idea)}
-                    >
-                      {idea.is_favorite ? 'Unfavourite' : 'Favourite'}
-                    </button>
                     {!idea.is_completed && (
                       <button
                         className="btn-small btn-calendar"

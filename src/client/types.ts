@@ -20,7 +20,6 @@ export interface DateIdea {
   title: string;
   description: string;
   is_completed: boolean;
-  is_favorite: boolean;
   created_at: string;
   completed_at?: string;
   vote_count?: number;

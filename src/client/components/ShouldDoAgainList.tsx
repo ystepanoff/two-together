@@ -67,7 +67,7 @@ const ShouldDoAgainList: React.FC = () => {
       <div className="again-list">
         {filteredItems.length === 0 ? (
           <div className="empty-state">
-            <p>{items.length === 0 ? 'No dates to repeat yet. Complete and mark your favourite dates!' : 'No matching dates found.'}</p>
+            <p>{items.length === 0 ? 'No dates to repeat yet. Complete dates and vote for ones you want to do again!' : 'No matching dates found.'}</p>
           </div>
         ) : (
           <>

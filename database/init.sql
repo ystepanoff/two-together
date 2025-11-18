@@ -25,7 +25,6 @@ CREATE TABLE IF NOT EXISTS date_ideas (
   title VARCHAR(255) NOT NULL,
   description TEXT,
   is_completed BOOLEAN DEFAULT FALSE,
-  is_favorite BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   completed_at TIMESTAMP
 );
