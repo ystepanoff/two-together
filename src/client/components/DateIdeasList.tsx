@@ -14,6 +14,7 @@ const DateIdeasList: React.FC = () => {
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'completed' | 'voted'>('all');
   const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
   const [selectedDateIdea, setSelectedDateIdea] = useState<DateIdea | null>(null);
   const [dateIdeaEvents, setDateIdeaEvents] = useState<Record<number, CalendarEvent[]>>({});
@@ -27,6 +28,19 @@ const DateIdeasList: React.FC = () => {
       const data = await dateIdeasApi.getAll(page, pageSize);
       setIdeas(data.items);
       setTotal(data.total);
+
+      const eventsMap: Record<number, CalendarEvent[]> = {};
+      await Promise.all(
+        data.items.map(async (idea) => {
+          try {
+            const events = await calendarEventsApi.getEventsByDateIdea(idea.id);
+            eventsMap[idea.id] = events;
+          } catch (error) {
+            console.error(`Failed to load events for idea ${idea.id}:`, error);
+          }
+        })
+      );
+      setDateIdeaEvents(eventsMap);
     } catch (error) {
       console.error('Failed to load date ideas:', error);
     }
@@ -156,15 +170,34 @@ const DateIdeasList: React.FC = () => {
 
   const filteredIdeas = ideas.filter((idea) => {
     const query = searchQuery.toLowerCase();
-    return (
+    const matchesSearch =
       idea.title.toLowerCase().includes(query) ||
-      idea.description.toLowerCase().includes(query)
-    );
+      idea.description.toLowerCase().includes(query);
+
+    if (!matchesSearch) return false;
+
+    switch (filterStatus) {
+      case 'active':
+        return !idea.is_completed;
+      case 'completed':
+        return idea.is_completed;
+      case 'voted':
+        return (idea.vote_count || 0) > 0;
+      case 'all':
+      default:
+        return true;
+    }
   });
 
   return (
-    <div className="section">
-      <h2>Date Ideas</h2>
+    <div className="section date-ideas-section">
+      <div className="section-header">
+        <h2>💡 Date Ideas</h2>
+        <div className="section-stats">
+          <span className="stat-badge">{total} total</span>
+          <span className="stat-badge">{ideas.filter(i => i.is_completed).length} completed</span>
+        </div>
+      </div>
 
       <div className="search-box">
         <input
@@ -174,6 +207,33 @@ const DateIdeasList: React.FC = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="search-input"
         />
+      </div>
+
+      <div className="filter-controls">
+        <button
+          className={`filter-btn ${filterStatus === 'all' ? 'active' : ''}`}
+          onClick={() => setFilterStatus('all')}
+        >
+          All
+        </button>
+        <button
+          className={`filter-btn ${filterStatus === 'active' ? 'active' : ''}`}
+          onClick={() => setFilterStatus('active')}
+        >
+          Active
+        </button>
+        <button
+          className={`filter-btn ${filterStatus === 'completed' ? 'active' : ''}`}
+          onClick={() => setFilterStatus('completed')}
+        >
+          Completed
+        </button>
+        <button
+          className={`filter-btn ${filterStatus === 'voted' ? 'active' : ''}`}
+          onClick={() => setFilterStatus('voted')}
+        >
+          ❤️ Voted
+        </button>
       </div>
 
       <form className="add-form" onSubmit={handleAdd}>
@@ -189,13 +249,41 @@ const DateIdeasList: React.FC = () => {
           value={newDescription}
           onChange={(e) => setNewDescription(e.target.value)}
         />
-        <button type="submit">Add Date Idea</button>
+        <button type="submit">✨ Add Date Idea</button>
       </form>
 
       <div className="ideas-list">
         {filteredIdeas.length === 0 ? (
           <div className="empty-state">
-            <p>{ideas.length === 0 ? 'No date ideas yet. Add your first one above!' : 'No matching date ideas found.'}</p>
+            <div className="empty-icon">
+              {ideas.length === 0 ? '💡' : '🔍'}
+            </div>
+            <h3 className="empty-title">
+              {ideas.length === 0
+                ? 'No Date Ideas Yet'
+                : searchQuery
+                ? 'No Matching Results'
+                : filterStatus === 'active'
+                ? 'No Active Ideas'
+                : filterStatus === 'completed'
+                ? 'No Completed Ideas'
+                : filterStatus === 'voted'
+                ? 'No Voted Ideas'
+                : 'No Ideas Found'}
+            </h3>
+            <p className="empty-description">
+              {ideas.length === 0
+                ? 'Start by adding your first date idea above!'
+                : searchQuery
+                ? 'Try adjusting your search terms'
+                : filterStatus === 'active'
+                ? 'All your ideas are completed!'
+                : filterStatus === 'completed'
+                ? 'Complete some ideas to see them here'
+                : filterStatus === 'voted'
+                ? 'Vote on completed dates to see them here'
+                : 'Try changing your filters'}
+            </p>
           </div>
         ) : (
           filteredIdeas.map((idea) => (
@@ -219,10 +307,10 @@ const DateIdeasList: React.FC = () => {
                       className="btn-save"
                       onClick={() => handleSaveEdit(idea.id)}
                     >
-                      Save
+                      ✓ Save
                     </button>
                     <button className="btn-cancel" onClick={handleCancelEdit}>
-                      Cancel
+                      ✕ Cancel
                     </button>
                   </div>
                 </div>
@@ -236,12 +324,29 @@ const DateIdeasList: React.FC = () => {
                       onChange={() => handleToggleComplete(idea)}
                     />
                     <div className="idea-content">
-                      <div
-                        className={`idea-title ${
-                          idea.is_completed ? 'completed' : ''
-                        }`}
-                      >
-                        {idea.title}
+                      <div className="idea-title-row">
+                        <div
+                          className={`idea-title ${
+                            idea.is_completed ? 'completed' : ''
+                          }`}
+                        >
+                          {idea.title}
+                        </div>
+                        <div className="idea-badges">
+                          {idea.is_completed && (
+                            <span className="badge badge-completed">✓ Done</span>
+                          )}
+                          {(idea.vote_count || 0) > 0 && (
+                            <span className={`badge badge-votes ${(idea.vote_count || 0) === 2 ? 'badge-votes-full' : ''}`}>
+                              ❤️ {idea.vote_count || 0}/2
+                            </span>
+                          )}
+                          {dateIdeaEvents[idea.id] && dateIdeaEvents[idea.id].length > 0 && (
+                            <span className="badge badge-calendar">
+                              📅 {dateIdeaEvents[idea.id].length}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       {idea.description && (
                         <div className="idea-description">{idea.description}</div>
@@ -254,7 +359,7 @@ const DateIdeasList: React.FC = () => {
                         className="btn-small btn-calendar"
                         onClick={() => handleAddToCalendar(idea)}
                       >
-                        📅 Add to Calendar
+                        📅 Calendar
                       </button>
                     )}
                     {idea.is_completed && (
@@ -264,14 +369,14 @@ const DateIdeasList: React.FC = () => {
                             className="btn-small btn-voted"
                             onClick={() => handleRemoveVote(idea)}
                           >
-                            Remove Vote ({idea.vote_count || 0}/2)
+                            ❤️ Voted ({idea.vote_count || 0}/2)
                           </button>
                         ) : (
                           <button
                             className="btn-small btn-vote"
                             onClick={() => handleVote(idea)}
                           >
-                            Vote to Do Again ({idea.vote_count || 0}/2)
+                            💚 Vote ({idea.vote_count || 0}/2)
                           </button>
                         )}
                       </>
@@ -280,13 +385,13 @@ const DateIdeasList: React.FC = () => {
                       className="btn-small btn-edit"
                       onClick={() => handleStartEdit(idea)}
                     >
-                      Edit
+                      ✏️ Edit
                     </button>
                     <button
                       className="btn-small btn-delete"
                       onClick={() => handleDelete(idea.id)}
                     >
-                      Delete
+                      🗑️ Delete
                     </button>
                   </div>
                 </>

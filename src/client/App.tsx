@@ -5,6 +5,7 @@ import MainContent from './components/MainContent';
 import Settings from './components/Settings';
 import Admin from './components/Admin';
 import Calendar from './components/Calendar';
+import ShouldDoAgainPage from './components/ShouldDoAgainPage';
 import { User, PartnerStatus } from './types';
 import { authApi, setAuthErrorHandler } from './api';
 import './App.css';
@@ -192,6 +193,13 @@ const AppContent: React.FC = () => {
               Calendar
             </button>
             <button
+              onClick={() => navigate('/should-do-again')}
+              className="btn-secondary"
+              disabled={location.pathname === '/should-do-again'}
+            >
+              Should Do Again
+            </button>
+            <button
               onClick={() => navigate('/settings')}
               className="btn-secondary"
               disabled={location.pathname === '/settings'}
@@ -216,6 +224,7 @@ const AppContent: React.FC = () => {
         <Routes>
           <Route path="/" element={<MainContent />} />
           <Route path="/calendar" element={<Calendar />} />
+          <Route path="/should-do-again" element={<ShouldDoAgainPage />} />
           <Route
             path="/settings"
             element={
