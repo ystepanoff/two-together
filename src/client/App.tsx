@@ -172,53 +172,51 @@ const AppContent: React.FC = () => {
     <div className="app" style={{ '--background-image': `url(${backgroundImage})` } as React.CSSProperties}>
       <div className="main-container">
         <header className="header">
-          <h1>Two Together 💕</h1>
-          <div className="header-right">
-            {user && <span className="username">Hi, {user.username}!</span>}
-            {partnerStatus?.partner && (
-              <span className="partner-info">💑 Paired with {partnerStatus.partner.username}</span>
-            )}
+          <div className="header-top">
+            <h1>Two Together 💕</h1>
+            <div className="header-user">
+              {partnerStatus?.partner && (
+                <span className="partner-info">💑 {partnerStatus.partner.username}</span>
+              )}
+              <button onClick={handleLogout} className="btn-logout">
+                Logout
+              </button>
+            </div>
+          </div>
+          <nav className="header-nav">
             <button
               onClick={() => navigate('/')}
-              className="btn-secondary"
-              disabled={location.pathname === '/'}
+              className={`nav-btn ${location.pathname === '/' ? 'active' : ''}`}
             >
               Home
             </button>
             <button
               onClick={() => navigate('/calendar')}
-              className="btn-secondary"
-              disabled={location.pathname === '/calendar'}
+              className={`nav-btn ${location.pathname === '/calendar' ? 'active' : ''}`}
             >
               Calendar
             </button>
             <button
               onClick={() => navigate('/should-do-again')}
-              className="btn-secondary"
-              disabled={location.pathname === '/should-do-again'}
+              className={`nav-btn ${location.pathname === '/should-do-again' ? 'active' : ''}`}
             >
               Should Do Again
             </button>
             <button
               onClick={() => navigate('/settings')}
-              className="btn-secondary"
-              disabled={location.pathname === '/settings'}
+              className={`nav-btn ${location.pathname === '/settings' ? 'active' : ''}`}
             >
               Settings
             </button>
             {isAdmin && (
               <button
                 onClick={() => navigate('/admin')}
-                className="btn-secondary"
-                disabled={location.pathname === '/admin'}
+                className={`nav-btn ${location.pathname === '/admin' ? 'active' : ''}`}
               >
                 Admin
               </button>
             )}
-            <button onClick={handleLogout} className="btn-secondary">
-              Logout
-            </button>
-          </div>
+          </nav>
         </header>
 
         <Routes>

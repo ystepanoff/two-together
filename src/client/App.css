@@ -145,13 +145,17 @@ body {
 
 .header {
   background: rgba(255, 255, 255, 0.95);
-  padding: 20px;
+  padding: 20px 24px;
   border-radius: 12px;
   margin-bottom: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.header-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  margin-bottom: 16px;
 }
 
 .header h1 {
@@ -159,26 +163,74 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  font-size: 32px;
+  font-size: 28px;
+  white-space: nowrap;
+  margin: 0;
 }
 
-.header-right {
+.header-user {
   display: flex;
   align-items: center;
-  gap: 20px;
-}
-
-.username {
-  color: #555;
-  font-weight: 500;
+  gap: 12px;
 }
 
 .partner-info {
   color: #8b5cf6;
   font-weight: 600;
   background: rgba(139, 92, 246, 0.1);
-  padding: 8px 12px;
+  padding: 8px 14px;
+  border-radius: 20px;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.btn-logout {
+  padding: 8px 16px;
+  background: transparent;
+  color: #666;
+  border: 2px solid #e0e0e0;
   border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-logout:hover {
+  border-color: #e74c3c;
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.05);
+}
+
+.header-nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.nav-btn {
+  padding: 10px 18px;
+  background: transparent;
+  color: #555;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.nav-btn:hover {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
+
+.nav-btn.active {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
 }
 
 .btn-secondary {
@@ -190,6 +242,7 @@ body {
   cursor: pointer;
   font-weight: 500;
   transition: all 0.3s;
+  white-space: nowrap;
 }
 
 .btn-secondary:hover {
@@ -214,13 +267,6 @@ body {
   display: grid;
   grid-template-columns: 1fr;
   gap: 30px;
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.page-container {
-  max-width: 900px;
-  margin: 0 auto;
 }
 
 @media (max-width: 768px) {
@@ -234,31 +280,38 @@ body {
   }
 
   .header {
-    flex-direction: column;
-    gap: 15px;
-    padding: 15px;
-    align-items: stretch;
+    padding: 16px;
+  }
+
+  .header-top {
+    margin-bottom: 12px;
   }
 
   .header h1 {
-    font-size: 24px;
-    text-align: center;
+    font-size: 22px;
   }
 
-  .header-right {
-    flex-direction: column;
-    gap: 10px;
-    width: 100%;
+  .header-user {
+    gap: 8px;
   }
 
-  .username,
   .partner-info {
-    text-align: center;
-    width: 100%;
+    padding: 6px 10px;
+    font-size: 13px;
   }
 
-  .btn-secondary {
-    width: 100%;
+  .btn-logout {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .header-nav {
+    gap: 6px;
+  }
+
+  .nav-btn {
+    padding: 8px 12px;
+    font-size: 13px;
   }
 
   .section {
@@ -926,8 +979,23 @@ body {
     margin-bottom: 20px;
   }
 
+  .header-top {
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
   .header h1 {
     font-size: 20px;
+    text-align: center;
+  }
+
+  .header-user {
+    justify-content: center;
+  }
+
+  .header-nav {
+    justify-content: center;
   }
 
   .section {
