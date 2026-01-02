@@ -80,7 +80,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
 
 router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const { title, description, is_completed, is_favorite } = req.body;
+  const { title, description, is_completed } = req.body;
 
   try {
     const coupleId = await getCoupleId(req.userId!);
@@ -94,11 +94,10 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
        SET title = COALESCE($1, title),
            description = COALESCE($2, description),
            is_completed = COALESCE($3, is_completed),
-           is_favorite = COALESCE($4, is_favorite),
            completed_at = CASE WHEN $3 = true THEN CURRENT_TIMESTAMP ELSE completed_at END
-       WHERE id = $5 AND couple_id = $6
+       WHERE id = $4 AND couple_id = $5
        RETURNING *`,
-      [title, description, is_completed, is_favorite, id, coupleId]
+      [title, description, is_completed, id, coupleId]
     );
 
     if (result.rows.length === 0) {
