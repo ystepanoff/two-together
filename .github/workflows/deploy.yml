@@ -47,9 +47,14 @@ jobs:
         script: |
           cd /opt/twotogether
           git pull
-          export GITHUB_TOKEN="${GHCR_TOKEN}"
-          export GITHUB_USERNAME="${GHCR_USERNAME}"
-          bash scripts/deploy.sh
+          echo "GHCR_USERNAME: ${GHCR_USERNAME}"
+          echo "GHCR_TOKEN length: ${#GHCR_TOKEN}"
+          echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USERNAME}" --password-stdin
+          docker-compose pull app
+          docker-compose down
+          docker-compose up -d
+          sleep 5
+          docker-compose ps
       env:
         GHCR_TOKEN: ${{ secrets.GHCR_PAT }}
         GHCR_USERNAME: ${{ github.repository_owner }}
