@@ -49,6 +49,14 @@ for migration in $(ls database/migration-*.sql | sort -V); do
     fi
 done
 
+echo "Renewing SSL certificate if needed..."
+if docker-compose run --rm certbot renew --webroot -w /var/www/certbot --quiet; then
+    docker-compose exec -T nginx nginx -s reload || true
+    echo "✓ Certificate renewal check completed"
+else
+    echo "⚠ Certificate renewal check failed (continuing)"
+fi
+
 echo "Checking container status..."
 docker-compose ps
 
